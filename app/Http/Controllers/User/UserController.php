@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers\User;
 
+use App\Mail\UserCreated;
 use App\User;
 use Illuminate\Http\Request;
 use App\Http\Controllers\ApiController;
+use Illuminate\Support\Facades\Mail;
 
 class UserController extends ApiController
 {
@@ -112,8 +114,8 @@ class UserController extends ApiController
         };
         if ($request->has("admin")){
             if (!$user->isVerified()){
-//                return response()->json(["error"=>"Only Verified user can modified Admin field","code"=>409],409);
-                return $this->errorResponse("Only Verified user can modified Admin field", 409);
+                return response()->json(["error"=>"Only Verified user can modified Admin field","code"=>409],409);
+//                return $this->errorResponse("Only Verified user can modified Admin field", 409);
             }
             $user->admin = $request->admin;
         };
@@ -140,5 +142,22 @@ class UserController extends ApiController
         $user->delete();
 //        return response()->json(["data"=>$user], 200);
         return $this->showOne($user);
+    }
+
+    public function verify($token){
+        $user = User::where('verification_token', $token)->firstOrFail();
+        $user->verified = User::VERIFIED_USER;
+        $user->verification_token = null;
+        $user->save();
+
+        return $this->showMessage('The account has been verified succesfully');
+    }
+
+    public function resend(User $user){
+        if ($user->isVerified()){
+            return $this->errorResponse("This User is already Verified", 409);
+        }
+        Mail::to($user)->send(new UserCreated($user));
+        return $this->showMessage("The Verification email has been resend");
     }
 }
