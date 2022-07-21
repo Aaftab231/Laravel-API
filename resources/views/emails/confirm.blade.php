@@ -1,7 +1,14 @@
-Hey {{$user->name}}
 
-You changed your email, So we need to verify this new address.
+@component('mail::message')
+    # Hey {{$user->name}}
 
-Please use the link below:-
+    You changed your email, So we need to verify this new address.
 
-{{route("verify", $user->verification_token)}}
+    Please use the button below:-
+    @component('mail::button', ['url' => route("verify", $user->verification_token)])
+        Verify Account
+    @endcomponent
+
+    Thanks,<br>
+    {{ config('app.name') }}
+@endcomponent
